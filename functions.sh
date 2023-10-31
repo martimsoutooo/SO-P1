@@ -10,6 +10,7 @@ function spacecheck() {
                     for folder in $@; do 
                         if [-d folder]; then 
                         find $folder -name "$padrao" | du -b "$folder"
+                        fi
                     done
                 fi
                 i=$((i+1)) # Avance para o próximo argumento
