@@ -1,4 +1,3 @@
-she bang
-ola
-aksjdajsd
-martim
+#!/bin/bash
+source functions.sh
+spacecheck "$@"
