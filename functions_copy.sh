@@ -37,7 +37,7 @@ function spacecheck() {
                 ;;
             s)
                 minsize="$OPTARG"
-                
+                sa=1
                 ;;
             r)
                 # ordem inversa
@@ -88,18 +88,26 @@ function size_filter() {
     if [ $sa -eq 1 ]; then
         echo "SIZE NAME $repository $minsize"
 
-        for k in $(find "$repository" -type d); do
+        while IFS= read -r -d '' k; do 
+        # O -R CERTIFICA QUE A BACKSLASH É TRATADA COMO CHARACTER E NAO ESCAPE
+        # O -D DIZ QUE O READ É DELIMITADO POR UM NULL \0
+        # ISTO PERMITE TRATAR CORRETAMENTE DE DIRETÓRIOS COM ESCAÇOS NELES
             size=0
-            folder=$(echo $k | grep -P -o '(?<=\.\.\/).*')
+            folder=$(echo "$k" | grep -P -o '(?<=\.\.\/).*')
+            
             echo "Folder: $folder"
-            for i in $(find "$k" -type f -size +"$minsize"c); do
+            while IFS= read -r -d '' i; do
                 size_i=$(du -b "$i" | cut -f1)
-                size=$(($size+$size_i))
-            done
+                if [ $size_i -ge $minsize ]; then
+                    size=$(($size+$size_i))
+                fi
+            done < <(find "$k" -type f -print0)
+
             echo "Size: $size"
-        done
+        done < <(find "$repository" -type d -print0)
     fi
 }
+
 
 function is_date() {
     local date_str="$1"
