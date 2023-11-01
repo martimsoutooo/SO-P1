@@ -36,7 +36,8 @@ function spacecheck() {
                 fi
                 ;;
             s)
-                # tamanho mínimo
+                minsize="$OPTARG"
+                
                 ;;
             r)
                 # ordem inversa
@@ -55,6 +56,7 @@ function spacecheck() {
     done
 
     name_filter "$target_directory" "$regex"
+    size_filter "$target_directory" "$minsize"
 }
 
 function name_filter() {
@@ -72,6 +74,26 @@ function name_filter() {
             folder=$(echo $k | grep -P -o '(?<=\.\.\/).*')
             echo "Folder: $folder"
             for i in $(find "$k" -type f -regex ".*$padrao.*"); do
+                size_i=$(du -b "$i" | cut -f1)
+                size=$(($size+$size_i))
+            done
+            echo "Size: $size"
+        done
+    fi
+}
+
+function size_filter() {
+    repository="$1"
+    minsize="$2"
+
+    if [ $sa -eq 1 ]; then
+        echo "SIZE NAME $repository $minsize"
+
+        for k in $(find "$repository" -type d); do
+            size=0
+            folder=$(echo $k | grep -P -o '(?<=\.\.\/).*')
+            echo "Folder: $folder"
+            for i in $(find "$k" -type f -size +"$minsize"c); do
                 size_i=$(du -b "$i" | cut -f1)
                 size=$(($size+$size_i))
             done
