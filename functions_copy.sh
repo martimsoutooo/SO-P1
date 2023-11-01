@@ -98,6 +98,7 @@ function size_filter() {
             echo "Folder: $folder"
             while IFS= read -r -d '' i; do
                 size_i=$(du -b "$i" | cut -f1)
+                
                 if [ $size_i -ge $minsize ]; then
                     size=$(($size+$size_i))
                 fi
@@ -105,6 +106,8 @@ function size_filter() {
 
             echo "Size: $size"
         done < <(find "$repository" -type d -print0)
+        # EXECUTA O COMANDO E LE O OUTPUT COMO SE FOSSE UMA LINHA
+        # < QUER LER UM FICHEIRO, <() METE O CONTENT DOS ()A SER LIDOS COMO FILE
     fi
 }
 
