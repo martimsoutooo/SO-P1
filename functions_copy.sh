@@ -68,17 +68,16 @@ function name_filter() {
     
 
         # Only search within the given directory, not subdirectories
-        for k in $(find "$repository" -maxdepth 1 -type d); do
-        
+        while IFS= read -r -d '' k; do
             size=0
-            folder=$(echo $k | grep -P -o '(?<=\.\.\/).*')
+            folder=$(echo "$k" | grep -P -o '(?<=\.\.\/).*')
             echo "Folder: $folder"
-            for i in $(find "$k" -type f -regex ".*$padrao.*"); do
+            while IFS= read -r -d '' i; do
                 size_i=$(du -b "$i" | cut -f1)
                 size=$(($size+$size_i))
-            done
+            done < <(find "$k" -type f -regex ".*$padrao.*" -print0)
             echo "Size: $size"
-        done
+        done < <(find "$repository" -type d -print0)
     fi
 }
 
