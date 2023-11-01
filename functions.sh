@@ -23,7 +23,6 @@ function spacecheck() {
                 if [ $((i + 1)) -le $# ]; then
                     temp=$((i+1))
                     padrao="${!temp}"
-                    echo "${padrao}"
 
                     na=1
                     #DAR SKIP AO PRÓXIMO ARGUMENTO PORQUE VAI SER O REGEX
@@ -70,22 +69,33 @@ function spacecheck() {
     done
     repository="${!#}" 
 
-    name_filter "$repository" "$padrao" 
+    name_filter "$repository" "$padrao"
 }
 
 function name_filter() {
     repository="$1"
     padrao="$2"
 
+    if [ $na -eq 1 ]; then
+        echo "Name filter"
+        echo "$repository"
+        echo "$padrao"
+    fi
 
-    find "$repository" -type f -name "*$padrao*" | while read -r file; do
-        dir=$(dirname "$file") # todos
-        size=$(du -sh "$dir" | cut -f1)
-        echo "$size $dir"
-        
+    # Only search within the given directory, not subdirectories
+    for k in $(find "$repository" -maxdepth 1 -type d); do
+    
+        size=0
+        echo "Folder"
+        echo "$k"
+        for i in $(find "$k" -maxdepth 1 -type f -regex ".*$padrao.*"); do
+            echo "$i"
+            size=$(du -h "$i" | cut -f1)
+            echo "Size: $size"
+        done
     done
-
 }
+
 
 function data_check(){
     local date_str="$1"
