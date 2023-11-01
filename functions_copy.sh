@@ -1,7 +1,7 @@
 target_directory=""
 regex=""
 date="2050-01-01"
-na=0
+na=0                            
 da=0
 sa=0
 ra=0
@@ -10,7 +10,7 @@ aa=0
 function spacecheck() {
     for dir in "$@"; do
         if [ -d "$dir" ]; then
-            target_directory="$dir"
+            target_directory="$dir"               
         fi
     done
 
@@ -26,14 +26,9 @@ function spacecheck() {
                 fi
                 ;;
             d)
-                date="$OPTARG"
-                if is_date "$date"; then
-                    echo "$date"
-                    da=1
-                else
-                    echo "Missing or invalid date argument for -d option."
-                    exit 1
-                fi
+                lastdate="$OPTARG"
+                da=1
+                
                 ;;
             s)
                 minsize="$OPTARG"
@@ -57,12 +52,12 @@ function spacecheck() {
 
     name_filter "$target_directory" "$regex"
     size_filter "$target_directory" "$minsize"
+    date_filter "$target_directory" "$lastdate"
 }
 
 function name_filter() {
     repository="$1"
-    padrao="$2"
-
+    padrao="$2" 
     if [ $na -eq 1 ]; then
         echo "SIZE NAME $repository $padrao"
     
@@ -80,6 +75,40 @@ function name_filter() {
         done < <(find "$repository" -type d -print0)
     fi
 }
+
+
+function date_filter() {
+    repository="$1"
+    user_date="$2"
+
+    if [ $da -eq 1 ]; then
+        echo "DATE NAME $repository $user_date"
+        
+        user_date_formatted=$(date -d "$user_date" "+%Y-%m-%d")
+
+        while IFS= read -r -d '' k; do
+            size=0
+            folder=$(echo "$k" | grep -P -o '(?<=\.\.\/).*')
+            echo "Folder: $folder"
+            
+            while IFS= read -r -d '' i; do
+                
+                file_date=$(date -r "$i" "+%Y-%m-%d")
+
+                file_date_seconds=$(date -r "$i" +%s)
+                user_date_seconds=$(date -d "$user_date_formatted" +%s)
+                
+                if [[ "$file_date_seconds" -le "$user_date_seconds" ]]; then
+                    size_i=$(du -b "$i" | cut -f1)
+                    size=$(($size+$size_i))
+                fi
+            done < <(find "$k" -type f -print0)
+
+            echo "Size: $size"
+        done < <(find "$repository" -type d -print0)
+    fi
+}
+
 
 function size_filter() {
     repository="$1"
@@ -111,16 +140,16 @@ function size_filter() {
     fi
 }
 
-
 function is_date() {
-    local date_str="$1"
-    date -d "$date_str" > /dev/null 2>&1
-    if [ $? -eq 0 ]; then
-        return 0
-    else
-        return 1
-    fi
+   local date_str="\$1"
+   local date_out=$(date -d "$date_str" 2>&1)
+   if [[ $date_out =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+       return 0
+   else
+       return 1
+   fi
 }
+
 
 function is_regex() {
     local pattern="$1"
