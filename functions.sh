@@ -77,23 +77,22 @@ function name_filter() {
     padrao="$2"
 
     if [ $na -eq 1 ]; then
-        echo "Name filter"
-        echo "$repository"
-        echo "$padrao"
-    fi
-
-    # Only search within the given directory, not subdirectories
-    for k in $(find "$repository" -maxdepth 1 -type d); do
+        echo "SIZE NAME $repository $padrao"
     
-        size=0
-        echo "Folder"
-        echo "$k"
-        for i in $(find "$k" -maxdepth 1 -type f -regex ".*$padrao.*"); do
-            echo "$i"
-            size=$(du -h "$i" | cut -f1)
+
+        # Only search within the given directory, not subdirectories
+        for k in $(find "$repository" -maxdepth 1 -type d); do
+        
+            size=0
+            folder=$(echo $k | grep -P -o '(?<=\.\.\/).*')
+            echo "Folder: $folder"
+            for i in $(find "$k" -type f -regex ".*$padrao.*"); do
+                size_i=$(du -b "$i" | cut -f1)
+                size=$(($size+$size_i))
+            done
             echo "Size: $size"
         done
-    done
+    fi
 }
 
 
