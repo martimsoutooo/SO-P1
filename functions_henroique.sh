@@ -58,7 +58,8 @@ function spacecheck() {
 
     name_filter "$target_directory" "$regex"
     size_filter "$target_directory" "$minsize"
-    alphabetic_filter "$target_directory"
+    alphabetic_order "$target_directory"
+    table_print $@
 }
 
 # ################# FUNCOES OPERAÇOES POSSIVEIS #########################
@@ -82,8 +83,11 @@ function name_filter() {
                 size=$(($size+$size_i))
             done < <(find "$k" -type f -regex ".*$padrao.*" -print0)
             echo "Size: $size"
+    
         done < <(find "$repository" -type d -print0)
+        
     fi
+
 }
 
 function size_filter() {
@@ -111,18 +115,37 @@ function size_filter() {
 
             echo "Size: $size"
         done < <(find "$repository" -type d -print0)
+
         # EXECUTA O COMANDO E LE O OUTPUT COMO SE FOSSE UMA LINHA
         # < QUER LER UM FICHEIRO, <() METE O CONTENT DOS ()A SER LIDOS COMO FILE
     fi
 }
 
-function alphabetic_filter(){
+function alphabetic_order(){
 
     repository="$1"
     if [ $aa -eq 1 ]; then
         echo "ALPHABETIC ORDER $repository"
         find "$repository" -type d | sort
     fi
+}
+
+function table_print() {
+    header="Size Name $(date +'%Y-%m-%d') "
+    printf "%-10s %-5s %-10s" $header
+    
+    for ((i = 1; i <= $# - 1; i++)); do
+        if [[ "${!i}" =~ ^[0-9]+$ ]]; then
+            # Handle numeric arguments differently (without quotes)
+            printf " %s" "${!i}"
+        elif is_regex "${!i}"; then
+            printf " \"%-4s\"" "${!i}"
+        else
+            printf "%3s" "${!i}"
+        fi
+    done
+    
+    printf "%3s \n" $(basename "${!#}") 
 }
 
 # ################# FUNCOES VERIFICAO E AUXILIARES #########################

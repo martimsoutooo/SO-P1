@@ -85,8 +85,9 @@ function date_filter() {
         echo "DATE NAME $repository $user_date"
         
         user_date_formatted=$(date -d "$user_date" "+%Y-%m-%d")
-
+        echo "ola $user_date"
         while IFS= read -r -d '' k; do
+
             size=0
             folder=$(echo "$k" | grep -P -o '(?<=\.\.\/).*')
             echo "Folder: $folder"
