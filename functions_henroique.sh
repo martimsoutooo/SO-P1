@@ -127,6 +127,7 @@ function alphabetic_order(){
 }
 
 function table_header_print() {
+    
     header="SIZE NAME $(date +'%Y%m%d') "
     printf "%-10s %-5s %-10s" $header
     
@@ -146,10 +147,21 @@ function table_header_print() {
 }
 
 function table_line_print(){
+    
     size="$1"
     folder=$(echo "$2" | grep -P -o '(?<=\.\.\/).*')
 
     printf "%-10s %-5s \n" "$size" "$folder"
+}
+
+function line_cutter(){
+
+    n_lines="$1"
+
+    if [ $sa -eq 1 ]; then
+        
+    fi
+
 }
 
 # ################# FUNCOES VERIFICAO E AUXILIARES #########################
