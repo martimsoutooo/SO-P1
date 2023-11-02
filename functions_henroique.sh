@@ -6,6 +6,8 @@ da=0
 sa=0
 ra=0
 aa=0
+max="Default"
+lines_printed=1
 
 function spacecheck() {
     for dir in "$@"; do
@@ -14,7 +16,7 @@ function spacecheck() {
         fi
     done
 
-    while getopts "n:d:s:ral" opt; do
+    while getopts "n:d:s:l:ra" opt; do
         case $opt in
             n)
                 regex="$OPTARG"
@@ -49,6 +51,10 @@ function spacecheck() {
                 ;;
             l)
                 # número de linhas que o utilizador quer na tabela
+                n_lines="$OPTARG"
+                if is_number "$n_lines"; then
+                    max="$n_lines"
+                fi
                 ;;
             *)
                 echo "Deu merda mano"
@@ -148,20 +154,20 @@ function table_header_print() {
 
 function table_line_print(){
     
-    size="$1"
-    folder=$(echo "$2" | grep -P -o '(?<=\.\.\/).*')
+    if [ "$max" == "Default" ]; then
+        size="$1"
+        folder=$(echo "$2" | grep -P -o '(?<=\.\.\/).*')
 
-    printf "%-10s %-5s \n" "$size" "$folder"
-}
+        printf "%-10s %-5s \n" "$size" "$folder"
+    else
+        if [ $lines_printed -le $max ]; then
+            size="$1"
+            folder=$(echo "$2" | grep -P -o '(?<=\.\.\/).*')
 
-function line_cutter(){
-
-    n_lines="$1"
-
-    if [ $sa -eq 1 ]; then
-        
+            printf "%-10s %-5s \n" "$size" "$folder"
+            lines_printed=$(($lines_printed+1))
+        fi
     fi
-
 }
 
 # ################# FUNCOES VERIFICAO E AUXILIARES #########################
@@ -187,6 +193,16 @@ function is_regex() {
         return 1
     fi
 }
+
+function is_number() {
+    local re='^[1-9][0-9]*$'
+    if [[ $1 =~ $re ]]; then
+        return 0  # Success (true)
+    else
+        return 1  # Failure (false)
+    fi
+}
+
 
 
 
