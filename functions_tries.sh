@@ -42,9 +42,8 @@ function name_filter() {
 function size_filter() {
     repository="$1"
     minsize="$2"
-    declare -a sizes=()
-    declare -a folders=()
 
+    declare -A associative
     if [ $sa -eq 1 ]; then
 
         while IFS= read -r -d '' k; do 
@@ -61,8 +60,6 @@ function size_filter() {
                 fi
             done < <(find "$k" -type f -print0)
 
-            sizes+=("$size")
-            folders+=("$k")
             associative["$k"]="$size"
         done < <(find "$repository" -type d -print0)
 
