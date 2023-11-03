@@ -9,64 +9,6 @@ aa=0
 max="Default"
 lines_printed=1
 
-function spacecheck() {
-    for dir in "$@"; do
-        if [ -d "$dir" ]; then
-            target_directory="$dir"
-        fi
-    done
-
-    while getopts "n:d:s:l:ra" opt; do
-        case $opt in
-            n)
-                regex="$OPTARG"
-                if is_regex "$regex"; then
-                    na=1
-                else
-                    echo "Missing or invalid regular expression argument for -n option."
-                    exit 1
-                fi
-                ;;
-            d)
-                date="$OPTARG"
-                if is_date "$date"; then
-                    echo "$date"
-                    da=1
-                else
-                    echo "Missing or invalid date argument for -d option."
-                    exit 1
-                fi
-                ;;
-            s)
-                minsize="$OPTARG"
-                sa=1
-                ;;
-            r)
-                # ordem inversa
-                ra=1
-                ;;
-            a)
-                # ordem alfabética
-                aa=1
-                ;;
-            l)
-                # número de linhas que o utilizador quer na tabela
-                n_lines="$OPTARG"
-                if is_number "$n_lines"; then
-                    max="$n_lines"
-                fi
-                ;;
-            *)
-                echo "Deu merda mano"
-                ;;
-        esac
-    done
-
-    table_header_print $@
-    name_filter "$target_directory" "$regex"
-    size_filter "$target_directory" "$minsize"
-    alphabetic_order "$target_directory"
-}
 
 # ################# FUNCOES OPERAÇOES POSSIVEIS #########################
 # #-----------------------------------------------------------------------#
@@ -205,6 +147,61 @@ function is_number() {
     fi
 }
 
+    for dir in "$@"; do
+        if [ -d "$dir" ]; then
+            target_directory="$dir"
+        fi
+    done
 
+    while getopts "n:d:s:l:ra" opt; do
+        case $opt in
+            n)
+                regex="$OPTARG"
+                if is_regex "$regex"; then
+                    na=1
+                else
+                    echo "Missing or invalid regular expression argument for -n option."
+                    exit 1
+                fi
+                ;;
+            d)
+                date="$OPTARG"
+                if is_date "$date"; then
+                    echo "$date"
+                    da=1
+                else
+                    echo "Missing or invalid date argument for -d option."
+                    exit 1
+                fi
+                ;;
+            s)
+                minsize="$OPTARG"
+                sa=1
+                ;;
+            r)
+                # ordem inversa
+                ra=1
+                ;;
+            a)
+                # ordem alfabética
+                aa=1
+                ;;
+            l)
+                # número de linhas que o utilizador quer na tabela
+                n_lines="$OPTARG"
+                if is_number "$n_lines"; then
+                    max="$n_lines"
+                fi
+                ;;
+            *)
+                echo "Deu merda mano"
+                ;;
+        esac
+    done
+
+    table_header_print $@
+    name_filter "$target_directory" "$regex"
+    size_filter "$target_directory" "$minsize"
+    alphabetic_order "$target_directory"
 
 
