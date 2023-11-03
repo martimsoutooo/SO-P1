@@ -16,6 +16,7 @@ lines_printed=1
 function name_filter() {
     repository="$1"
     padrao="$2"
+    declare -A name_info=()
 
     if [ $na -eq 1 ]; then    
 
@@ -27,9 +28,13 @@ function name_filter() {
                 size=$(($size+$size_i))
             done < <(find "$k" -type f -regex ".*$padrao.*" -print0)
             
-            table_line_print $size $k
+            name_info["$k"]=$size
         done < <(find "$repository" -type d -print0)
-        
+
+        for directory in "${!name_info[@]}"; do
+            table_line_print "${name_info[$directory]}" "$directory"
+        done
+
     fi
 
 }
@@ -94,18 +99,15 @@ function table_header_print() {
 
 }
 
-function table_line_print(){
-    
-    if [ "$max" == "Default" ]; then
-        size="$1"
-        folder=$(echo "$2" | grep -P -o '(?<=\.\.\/).*')
+function table_line_print() {
+    local array=("$@")
+    local size="${array[0]}"
+    local folder=$(echo "${array[1]}" | grep -P -o '(?<=\.\.\/).*')
 
+    if [ "$max" == "Default" ]; then
         printf "%-10s %-5s \n" "$size" "$folder"
     else
         if [ $lines_printed -le $max ]; then
-            size="$1"
-            folder=$(echo "$2" | grep -P -o '(?<=\.\.\/).*')
-
             printf "%-10s %-5s \n" "$size" "$folder"
             lines_printed=$(($lines_printed+1))
         fi

@@ -20,10 +20,11 @@ lines=()
 function name_filter() {
     repository="$1"
     padrao="$2"
-    declare -A name_info=()
+    declare -a sizes=()
+    declare -a folders=()
 
-    if [ $na -eq 1 ]; then    
-
+    if [ $na -eq 1 ]; then  
+    
         # Only search within the given directory, not subdirectories
         while IFS= read -r -d '' k; do
             size=0
@@ -32,15 +33,14 @@ function name_filter() {
                 size=$(($size+$size_i))
             done < <(find "$k" -type f -regex ".*$padrao.*" -print0)
             
-            name_info["$k"]=$size
+            sizes+=("$size")
+            folders+=("$k")
         done < <(find "$repository" -type d -print0)
-        for directory in "${!name_info[@]}"; do
-            table_line_print "${name_info[$directory]}" "$directory"
-        done
-
+        
+        table_line_print
     fi
-
 }
+
 
 function size_filter() {
     repository="$1"
@@ -63,10 +63,12 @@ function size_filter() {
                 fi
             done < <(find "$k" -type f -print0)
 
-            size_info["$k"]=$size
+            sizes+=("$size")
+            folders+=("$k")
         done < <(find "$repository" -type d -print0)
 
-        table_line_print "$size_info"
+
+        table_line_print 
         
         # EXECUTA O COMANDO E LE O OUTPUT COMO SE FOSSE UMA LINHA
         # < QUER LER UM FICHEIRO, <() METE O CONTENT DOS ()A SER LIDOS COMO FILE
@@ -106,19 +108,24 @@ function table_header_print() {
 }
 
 function table_line_print() {
-    local array=("$@")
-    local size="${array[0]}"
-    local folder=$(echo "${array[1]}" | grep -P -o '(?<=\.\.\/).*')
 
-    if [ "$max" == "Default" ]; then
-        printf "%-10s %-5s \n" "$size" "$folder"
-    else
-        if [ $lines_printed -le $max ]; then
+    for i in "${!sizes[@]}"; do
+        local size="${sizes[$i]}"
+        local folder="${folders[$i]}"
+        
+        if [ "$max" == "Default" ]; then
             printf "%-10s %-5s \n" "$size" "$folder"
-            lines_printed=$(($lines_printed+1))
+        else
+            if [ $lines_printed -le $max ]; then
+                printf "%-10s %-5s \n" "$size" "$folder"
+                lines_printed=$(($lines_printed+1))
+            fi
         fi
-    fi
+    done
 }
+
+
+
 
 
 # ################# FUNCOES VERIFICAO E AUXILIARES #########################
