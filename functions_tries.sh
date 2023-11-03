@@ -8,19 +8,19 @@ ra=0
 aa=0
 max="Default"
 lines_printed=1
-lines=()
-
-
+declare -A associative
+declare -A passed_filters
+nc=1
+dc=1
+sc=1
 
 # ################# FUNCOES OPERAÇOES POSSIVEIS #########################
 # #-----------------------------------------------------------------------#
 
-function name_filter() {
+function no_argument() {
     repository="$1"
-    padrao="$2"
 
-    declare -A associative
-    if [ $na -eq 1 ]; then  
+    if [ $na -eq 0 ] && [ $sa -eq 0 ] && [ $da -eq 0 ]; then  
     
         # Only search within the given directory, not subdirectories
         while IFS= read -r -d '' k; do
@@ -28,7 +28,7 @@ function name_filter() {
             while IFS= read -r -d '' i; do
                 size_i=$(du -b "$i" | cut -f1)
                 size=$(($size+$size_i))
-            done < <(find "$k" -type f -regex ".*$padrao.*" -print0)
+            done < <(find "$k" -type f -print0)
             
             associative["$k"]="$size"
         
@@ -39,47 +39,123 @@ function name_filter() {
 }
 
 
-function size_filter() {
+function name_filter() {
     repository="$1"
-    minsize="$2"
+    padrao="$2"
+    nc=1
+    declare -A passed_name
 
-    declare -A associative
-    if [ $sa -eq 1 ]; then
-
-        while IFS= read -r -d '' k; do 
-        # O -R CERTIFICA QUE A BACKSLASH É TRATADA COMO CHARACTER E NAO ESCAPE
-        # O -D DIZ QUE O READ É DELIMITADO POR UM NULL \0
-        # ISTO PERMITE TRATAR CORRETAMENTE DE DIRETÓRIOS COM ESCAÇOS NELES
-            size=0
-            
-            while IFS= read -r -d '' i; do
-                size_i=$(du -b "$i" | cut -f1)
-
-                if [ $size_i -ge $minsize ]; then
+    if [ $na -eq 1 ]; then  
+        if [ ${#passed_filters[@]} -eq 0 ];then
+            # Only search within the given directory, not subdirectories
+            while IFS= read -r -d '' k; do
+                size=0
+                folder_files=()
+                while IFS= read -r -d '' i; do
+                    size_i=$(du -b "$i" | cut -f1)
                     size=$(($size+$size_i))
-                fi
-            done < <(find "$k" -type f -print0)
+                    folder_files+=("$i")
+                done < <(find "$k" -type f -regex ".*$padrao.*" -print0)
+                
+                # COnVERTER O ARRAY NUMA STRING PARA PODER GUARDAR
+                # A VIRGULA GUARDA OS ELEMENTOS DO ARRAY SEPARADOS POR UMA VIRGULA
+                passed_name["$k"]=$(IFS=,; echo "${folder_files[*]}")
+                associative["$k"]="$size"
+            
+            done < <(find "$repository" -type d -print0)
+            
+        else
+            # run through the files previoulsy filtered and filter AGAIN
+            for folder in "${!passed_filters[@]}"; do
+                size=0
+                # RECONVERTE EM ARRAY A STRING
+                array_string="${passed_filters[$folder]}"
+                IFS=, read -ra folder_files <<< "$array_string"
+                for j in "${folder_files[@]}"; do
+                    if [[ $j =~ $padrao ]]; then
+                        size_i=$(du -b "$j" | cut -f1)
+                        size=$(($size+$size_i))
+                        folder_files+=("$j")
+                    fi
+                done
+                passed_name["$folder"]=$(IFS=,; echo "${folder_files[*]}")
+                associative["$folder"]="$size"
+            done
+            
 
-            associative["$k"]="$size"
-        done < <(find "$repository" -type d -print0)
+            
+        fi
 
-
-        table_line_print 
+        for i in "${!passed_name[@]}"; do
+            if [ -z "${passed_filters[$i]}" ]; then
+                passed_filters["$i"]=""
+            fi
+            passed_filters["$i"]+="${passed_name[$i]}"
+            # isto associa um folder a uma string de files filtrados
+        done
         
-        # EXECUTA O COMANDO E LE O OUTPUT COMO SE FOSSE UMA LINHA
-        # < QUER LER UM FICHEIRO, <() METE O CONTENT DOS ()A SER LIDOS COMO FILE
+        table_line_print
     fi
 }
 
-function alphabetic_order(){
-
+function size_filter() {
     repository="$1"
-    if [ $aa -eq 1 ]; then
-        find "$repository" -type d | sort | xargs -I {} du -sb {} | while read -r line; do    
-            size=$(echo "$line" | awk '{print $1}')
-            folder=$(echo "$line" | awk '{print $2}')
-            table_line_print "$size" "$folder"
+    minsize="$2"
+    sc=1
+    declare -A passed_size
+    if [ $sa -eq 1 ]; then
+        
+        if [ ${#passed_filters[@]} -eq 0 ];then
+            while IFS= read -r -d '' k; do 
+            # O -R CERTIFICA QUE A BACKSLASH É TRATADA COMO CHARACTER E NAO ESCAPE
+            # O -D DIZ QUE O READ É DELIMITADO POR UM NULL \0
+            # ISTO PERMITE TRATAR CORRETAMENTE DE DIRETÓRIOS COM ESCAÇOS NELES
+                size=0
+                folder_files=()                
+                while IFS= read -r -d '' i; do
+                    size_i=$(du -b "$i" | cut -f1)
+
+                    if [ $size_i -ge $minsize ]; then
+                        size=$(($size+$size_i))
+                        folder_files+=("$i")
+                    fi
+                done < <(find "$k" -type f -print0)        
+                 # EXECUTA O COMANDO E LE O OUTPUT COMO SE FOSSE UMA LINHA
+                # < QUER LER UM FICHEIRO, <() METE O CONTENT DOS ()A SER LIDOS COMO FILE
+
+                passed_size["$k"]=$(IFS=,; echo "${folder_files[*]}")
+                associative["$k"]="$size"
+
+            done < <(find "$repository" -type d -print0)
+
+        else
+            for folder in "${!passed_filters[@]}"; do
+                size=0
+                array_string="${passed_filters[$folder]}"
+                IFS=, read -ra folder_files <<< "$array_string"
+                for j in "${folder_files[@]}"; do
+                    size_i=$(du -b "$j" | cut -f1)
+                    if [ $size_i -ge $minsize ]; then
+                        size=$(($size+$size_i))
+                        folder_files+=("$j")
+                    fi
+                done
+
+                passed_size["$folder"]=$(IFS=,; echo "${folder_files[*]}")
+                associative["$folder"]="$size"
+            done
+            
+
+            
+        fi
+        for i in "${!passed_size[@]}"; do
+            if [ -z "${passed_filters[$i]}" ]; then
+                passed_filters["$i"]=""
+            fi
+            passed_filters["$i"]+="${passed_size[$i]}"
         done
+        
+        table_line_print
     fi
 }
 
@@ -105,28 +181,32 @@ function table_header_print() {
 
 function table_line_print() {
 
-    if [ $aa -eq 1 ] && [ $ra -eq 1 ]; then
-        folders=($(echo "${!associative[@]}" | tr ' ' '\n' | sort -r ))
-    elif [ $aa -eq 1 ]; then
-        folders=($(echo "${!associative[@]}" | tr ' ' '\n' | sort ))
-    elif [ $ra -eq 1 ]; then
-        folders=($(for i in "${!associative[@]}"; do echo "${associative[$i]} $i"; done | sort -n -r | awk '{print $2}' | tac ))
-    else 
-        # POR DEFAUT IMPRIME POR SIZE 
-        folders=($(for i in "${!associative[@]}"; do echo "${associative[$i]} $i"; done | sort -n -r | awk '{print $2}' ))
-    fi
+    if [ $dc -eq 1 ] && [ $nc -eq 1 ] && [ $sc -eq 1 ]; then
 
-    for i in "${folders[@]}"; do
-        folder_pretty=$(echo "${i}" | grep -P -o '(?<=\.\.\/).*')
-        if [ "$max" == "Default" ]; then
-            printf "%-10s %-5s \n" "${associative[$i]}" "$folder_pretty"
-        else
-            if [ $lines_printed -le $max ]; then             
-                printf "%-10s %-5s \n" "${associative[$i]}" "$folder_pretty"
-                lines_printed=$(($lines_printed+1))
-            fi
+        if [ $aa -eq 1 ] && [ $ra -eq 1 ]; then
+            folders=($(echo "${!associative[@]}" | tr ' ' '\n' | sort -r ))
+        elif [ $aa -eq 1 ]; then
+            folders=($(echo "${!associative[@]}" | tr ' ' '\n' | sort ))
+        elif [ $ra -eq 1 ]; then
+            folders=($(for i in "${!associative[@]}"; do echo "${associative[$i]} $i"; done | sort -n -r | awk '{print $2}' | tac ))
+        else 
+            # POR DEFAUT IMPRIME POR SIZE 
+            folders=($(for i in "${!associative[@]}"; do echo "${associative[$i]} $i"; done | sort -n -r | awk '{print $2}' ))
         fi
-    done
+
+        for i in "${folders[@]}"; do
+            folder_pretty=$(echo "${i}" | grep -P -o '(?<=\.\.\/).*')
+            size="${associative[$i]}" 
+            if [ "$max" == "Default" ]; then
+                printf "%-10s %-5s \n" "$size" "$folder_pretty"
+            else
+                if [ $lines_printed -le $max ]; then             
+                    printf "%-10s %-5s \n" "$size" "$folder_pretty"
+                    lines_printed=$(($lines_printed+1))
+                fi
+            fi
+        done
+    fi
 }
 
 # ################# FUNCOES VERIFICAO E AUXILIARES #########################
@@ -164,59 +244,62 @@ function is_number() {
 
 
 
-    for dir in "$@"; do
-        if [ -d "$dir" ]; then
-            target_directory="$dir"
-        fi
-    done
+for dir in "$@"; do
+    if [ -d "$dir" ]; then
+        target_directory="$dir"
+    fi
+done
 
-    while getopts "n:d:s:l:ra" opt; do
-        case $opt in
-            n)
-                regex="$OPTARG"
-                if is_regex "$regex"; then
-                    na=1
-                else
-                    echo "Missing or invalid regular expression argument for -n option."
-                    exit 1
-                fi
-                ;;
-            d)
-                date="$OPTARG"
-                if is_date "$date"; then
-                    echo "$date"
-                    da=1
-                else
-                    echo "Missing or invalid date argument for -d option."
-                    exit 1
-                fi
-                ;;
-            s)
-                minsize="$OPTARG"
-                sa=1
-                ;;
-            r)
-                # ordem inversa
-                ra=1
-                ;;
-            a)
-                # ordem alfabética
-                aa=1
-                ;;
-            l)
-                # número de linhas que o utilizador quer na tabela
-                n_lines="$OPTARG"
-                if is_number "$n_lines"; then
-                    max="$n_lines"
-                fi
-                ;;
-            *)
-                echo "Deu merda mano"
-                ;;
-        esac
-    done
+while getopts "n:d:s:l:ra" opt; do
+    case $opt in
+        n)
+            regex="$OPTARG"
+            if is_regex "$regex"; then
+                na=1
+                nc=0
+            else
+                echo "Missing or invalid regular expression argument for -n option."
+                exit 1
+            fi
+            ;;
+        d)
+            date="$OPTARG"
+            if is_date "$date"; then
+                echo "$date"
+                da=1
+                
+            else
+                echo "Missing or invalid date argument for -d option."
+                exit 1
+            fi
+            ;;
+        s)
+            minsize="$OPTARG"
+            sa=1
+            sc=0
+            ;;
+        r)
+            # ordem inversa
+            ra=1
+            ;;
+        a)
+            # ordem alfabética
+            aa=1
+            ;;
+        l)
+            # número de linhas que o utilizador quer na tabela
+            n_lines="$OPTARG"
+            if is_number "$n_lines"; then
+                max="$n_lines"
+            fi
+            ;;
+        *)
+            echo "Deu merda mano"
+            ;;
+    esac
+done
 
-    table_header_print $@
-    name_filter "$target_directory" "$regex"
-    size_filter "$target_directory" "$minsize"
-    alphabetic_order "$target_directory"
+table_header_print $@
+no_argument "$target_directory"
+name_filter "$target_directory" "$regex"
+size_filter "$target_directory" "$minsize"
