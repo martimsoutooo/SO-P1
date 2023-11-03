@@ -12,17 +12,14 @@ lines=()
 
 
 
-
-
 # ################# FUNCOES OPERAÇOES POSSIVEIS #########################
 # #-----------------------------------------------------------------------#
 
 function name_filter() {
     repository="$1"
     padrao="$2"
-    declare -a sizes=()
-    declare -a folders=()
 
+    declare -A associative
     if [ $na -eq 1 ]; then  
     
         # Only search within the given directory, not subdirectories
@@ -33,8 +30,8 @@ function name_filter() {
                 size=$(($size+$size_i))
             done < <(find "$k" -type f -regex ".*$padrao.*" -print0)
             
-            sizes+=("$size")
-            folders+=("$k")
+            associative["$k"]="$size"
+        
         done < <(find "$repository" -type d -print0)
         
         table_line_print
@@ -45,7 +42,8 @@ function name_filter() {
 function size_filter() {
     repository="$1"
     minsize="$2"
-    declare -A size_info=()
+    declare -a sizes=()
+    declare -a folders=()
 
     if [ $sa -eq 1 ]; then
 
@@ -65,6 +63,7 @@ function size_filter() {
 
             sizes+=("$size")
             folders+=("$k")
+            associative["$k"]="$size"
         done < <(find "$repository" -type d -print0)
 
 
@@ -109,24 +108,29 @@ function table_header_print() {
 
 function table_line_print() {
 
-    for i in "${!sizes[@]}"; do
-        local size="${sizes[$i]}"
-        local folder="${folders[$i]}"
-        
+    if [ $aa -eq 1 ] && [ $ra -eq 1 ]; then
+        folders=($(echo "${!associative[@]}" | tr ' ' '\n' | sort -r ))
+    elif [ $aa -eq 1 ]; then
+        folders=($(echo "${!associative[@]}" | tr ' ' '\n' | sort ))
+    elif [ $ra -eq 1 ]; then
+        folders=($(for i in "${!associative[@]}"; do echo "${associative[$i]} $i"; done | sort -n -r | awk '{print $2}' | tac ))
+    else 
+        # POR DEFAUT IMPRIME POR SIZE 
+        folders=($(for i in "${!associative[@]}"; do echo "${associative[$i]} $i"; done | sort -n -r | awk '{print $2}' ))
+    fi
+
+    for i in "${folders[@]}"; do
+        folder_pretty=$(echo "${i}" | grep -P -o '(?<=\.\.\/).*')
         if [ "$max" == "Default" ]; then
-            printf "%-10s %-5s \n" "$size" "$folder"
+            printf "%-10s %-5s \n" "${associative[$i]}" "$folder_pretty"
         else
-            if [ $lines_printed -le $max ]; then
-                printf "%-10s %-5s \n" "$size" "$folder"
+            if [ $lines_printed -le $max ]; then             
+                printf "%-10s %-5s \n" "${associative[$i]}" "$folder_pretty"
                 lines_printed=$(($lines_printed+1))
             fi
         fi
     done
 }
-
-
-
-
 
 # ################# FUNCOES VERIFICAO E AUXILIARES #########################
 # #-----------------------------------------------------------------------#
