@@ -48,6 +48,7 @@ function name_filter() {
             # run through the files previoulsy filtered and filter AGAIN
             for folder in "${!passed_filters[@]}"; do
                 size=0
+                folder_files=()
                 # RECONVERTE EM ARRAY A STRING
                 array_string="${passed_filters[$folder]}"
                 IFS=, read -ra folder_files <<< "$array_string"
@@ -66,6 +67,9 @@ function name_filter() {
             
         fi
 
+        for key in "${!passed_filters[@]}"; do
+            unset passed_filters["$key"]
+        done
         for i in "${!passed_name[@]}"; do
             if [ -z "${passed_filters[$i]}" ]; then
                 passed_filters["$i"]=""
@@ -89,7 +93,7 @@ function size_filter() {
             while IFS= read -r -d '' k; do 
             
                 size=0
-                folder_files=()                
+                folder_files=()              
                 while IFS= read -r -d '' i; do
                     size_i=$(du -b "$i" | cut -f1)
 
@@ -109,6 +113,7 @@ function size_filter() {
         else
             for folder in "${!passed_filters[@]}"; do
                 size=0
+                folder_files=()
                 array_string="${passed_filters[$folder]}"
                 IFS=, read -ra folder_files <<< "$array_string"
                 for j in "${folder_files[@]}"; do
@@ -126,6 +131,11 @@ function size_filter() {
 
             
         fi
+        
+        for key in "${!passed_filters[@]}"; do
+            unset passed_filters["$key"]
+        done
+
         for i in "${!passed_size[@]}"; do
             if [ -z "${passed_filters[$i]}" ]; then
                 passed_filters["$i"]=""
@@ -169,17 +179,17 @@ function date_filter() {
                 associative["$k"]="$size"
 
             done < <(find "$repository" -type d -print0)
-        else 
+        else
+            
             for folder in "${!passed_filters[@]}"; do
                 size=0
+                folder_files=()
                 array_string="${passed_filters[$folder]}"
                 IFS=, read -ra folder_files <<< "$array_string"
-                
                 for j in "${folder_files[@]}"; do
-
+                    
                     file_date=$(date -r "$j" "+%Y-%m-%d")
                     file_date_seconds=$(date -r "$j" +%s)
-
                     
                     if [[ "$file_date_seconds" -le "$user_date_seconds" ]]; then
                         size_j=$(du -b "$j" | cut -f1)
@@ -193,6 +203,11 @@ function date_filter() {
             done
 
         fi
+
+        for key in "${!passed_filters[@]}"; do
+            unset passed_filters["$key"]
+        done
+
         for i in "${!passed_date[@]}"; do
                 if [ -z "${passed_filters[$i]}" ]; then
                     passed_filters["$i"]=""
@@ -200,6 +215,8 @@ function date_filter() {
                 passed_filters["$i"]+="${passed_date[$i]}"
                 
         done
+
+        
         table_line_print
     fi
     

@@ -83,8 +83,10 @@ args=("$@")
 for folder in ${dirs[@]}; do
     table_header_print ${args[@]}
     no_argument "$folder"
+    
     name_filter "$folder" "$regex"
-    size_filter "$folder" "$minsize"
     date_filter "$folder" "$lDate"
+    size_filter "$folder" "$minsize"
+    
 done
 
