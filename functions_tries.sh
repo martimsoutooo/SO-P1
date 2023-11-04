@@ -78,74 +78,6 @@ function name_filter() {
     fi
 }
 
-function date_filter() {
-    repository="$1"
-    user_date_seconds="$2"
-    dc=1
-    declare -A passed_date
-
-    if [ $da -eq 1 ]; then
-
-        if [ ${#passed_filters[@]} -eq 0 ]; then
-            while IFS= read -r -d '' k; do
-
-                size=0
-                folder=$(echo "$k" | grep -P -o '(?<=\.\.\/).*')
-                folder_files=()
-                while IFS= read -r -d '' i; do
-                    
-                    file_date=$(date -r "$i" "+%Y-%m-%d")
-                    file_date_seconds=$(date -r "$i" +%s)
-
-                    if [[ "$file_date_seconds" -le "$user_date_seconds" ]]; then
-                        size_i=$(du -b "$i" | cut -f1)
-                        size=$(($size+$size_i))
-                        folder_files+=("$i")
-                    fi
-
-                done < <(find "$k" -type f -print0)
-
-                passed_date["$k"]=$(IFS=,; echo "${folder_files[*]}")
-                associative["$k"]="$size"
-
-            done < <(find "$repository" -type d -print0)
-        else 
-            for folder in "${!passed_filters[@]}"; do
-                size=0
-                array_string="${passed_filters[$folder]}"
-                IFS=, read -ra folder_files <<< "$array_string"
-                for j in "${folder_files[@]}"; do
-
-                    file_date=$(date -r "$j" "+%Y-%m-%d")
-                    file_date_seconds=$(date -r "$j" +%s)
-
-                    
-                    if [[ "$file_date_seconds" -le "$user_date_seconds" ]]; then
-                        size_j=$(du -b "$j" | cut -f1)
-                        size=$(($size+$size_j))
-                        folder_files+=("$j")
-                    fi
-                done
-                
-                passed_date["$folder"]=$(IFS=,; echo "${folder_files[*]}")
-                associative["$folder"]="$size"
-            done
-
-        fi
-        for i in "${!passed_date[@]}"; do
-                if [ -z "${passed_filters[$i]}" ]; then
-                    passed_filters["$i"]=""
-                fi
-                passed_filters["$i"]+="${passed_date[$i]}"
-                
-        done
-        table_line_print
-    fi
-    
-}
-
-
-
 function size_filter() {
     repository="$1"
     minsize="$2"
@@ -204,6 +136,75 @@ function size_filter() {
         table_line_print
     fi
 }
+
+
+
+function date_filter() {
+    repository="$1"
+    user_date_seconds="$2"
+    dc=1
+    declare -A passed_date
+
+    if [ $da -eq 1 ]; then
+
+        if [ ${#passed_filters[@]} -eq 0 ]; then
+            while IFS= read -r -d '' k; do
+
+                size=0
+                folder_files=()
+                while IFS= read -r -d '' i; do
+                    
+                    file_date=$(date -r "$i" "+%Y-%m-%d")
+                    file_date_seconds=$(date -r "$i" +%s)
+
+                    if [[ "$file_date_seconds" -le "$user_date_seconds" ]]; then
+                        size_i=$(du -b "$i" | cut -f1)
+                        size=$(($size+$size_i))
+                        folder_files+=("$i")
+                    fi
+
+                done < <(find "$k" -type f -print0)
+
+                passed_date["$k"]=$(IFS=,; echo "${folder_files[*]}")
+                associative["$k"]="$size"
+
+            done < <(find "$repository" -type d -print0)
+        else 
+            for folder in "${!passed_filters[@]}"; do
+                size=0
+                array_string="${passed_filters[$folder]}"
+                IFS=, read -ra folder_files <<< "$array_string"
+                
+                for j in "${folder_files[@]}"; do
+
+                    file_date=$(date -r "$j" "+%Y-%m-%d")
+                    file_date_seconds=$(date -r "$j" +%s)
+
+                    
+                    if [[ "$file_date_seconds" -le "$user_date_seconds" ]]; then
+                        size_j=$(du -b "$j" | cut -f1)
+                        size=$(($size+$size_j))
+                        folder_files+=("$j")
+                    fi
+                done
+                
+                passed_date["$folder"]=$(IFS=,; echo "${folder_files[*]}")
+                associative["$folder"]="$size"
+            done
+
+        fi
+        for i in "${!passed_date[@]}"; do
+                if [ -z "${passed_filters[$i]}" ]; then
+                    passed_filters["$i"]=""
+                fi
+                passed_filters["$i"]+="${passed_date[$i]}"
+                
+        done
+        table_line_print
+    fi
+    
+}
+
 
 function is_regex() {
     pattern="$1"
