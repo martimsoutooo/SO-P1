@@ -16,6 +16,7 @@ sc=1
 #Arrays
 declare -A associative
 declare -A passed_filters
+extras_podres=()
 
 max="Default"
 lines_printed=1
@@ -75,6 +76,16 @@ while getopts "n:d:s:l:ra" opt; do
             exit 1
     esac
 done
+
+shift $((OPTIND-1))
+for arg in "$@"; do
+    extras_podres+=("$arg")
+done
+
+if [ ${#extras_podres[@]} -gt 1 ]; then
+    echo "Invalid argument(s): ${extras_podres[@]}"
+    exit 1
+fi
 
 # Chama funções para processar os filtros e imprimir a tabela
 table_header_print $@

@@ -107,7 +107,6 @@ function date_filter() {
                 passed_date["$k"]=$(IFS=,; echo "${folder_files[*]}")
                 associative["$k"]="$size"
 
-                table_line_print $size $k
             done < <(find "$repository" -type d -print0)
         else 
             for folder in "${!passed_filters[@]}"; do
