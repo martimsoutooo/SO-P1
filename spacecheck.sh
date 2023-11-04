@@ -14,7 +14,6 @@ dc=1
 sc=1
 
 #Arrays
-dirs=()
 declare -A associative
 declare -A passed_filters
 extras_podres=()
@@ -25,8 +24,7 @@ lines_printed=1
 # Itera pelos argumentos da linha de comando
 for dir in "$@"; do 
     if [ -d "$dir" ]; then 
-        dirs+=("$dir")  # Define o diretório de destino se for um diretório válido
-        echo "Diretório válido: $dir"
+        target_directory="$dir"  # Define o diretório de destino se for um diretório válido
     fi
 done
 
@@ -79,18 +77,24 @@ while getopts "n:d:s:l:ra" opt; do
     esac
 done
 
-args=("$@")
-
 shift $((OPTIND-1))
-
-
-echo "$dirs"
-# Chama funções para processar os filtros e imprimir a tabela
-for folder in $dirs; do
-    table_header_print ${args[@]}
-    no_argument "$folder"
-    name_filter "$folder" "$regex"
-    size_filter "$folder" "$minsize"
-    date_filter "$folder" "$lDate"
+for arg in "$@"; do
+    extras_podres+=("$arg")
 done
+
+if [ ${#extras_podres[@]} -gt 1 ]; then
+    echo "Invalid argument(s): ${extras_podres[@]}"
+    exit 1
+fi
+
+# Chama funções para processar os filtros e imprimir a tabela
+table_header_print $@
+no_argument "$target_directory"
+name_filter "$target_directory" "$regex"
+size_filter "$target_directory" "$minsize"
+date_filter "$target_directory" "$lDate"
+
+
+
+
 

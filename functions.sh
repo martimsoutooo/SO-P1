@@ -24,13 +24,13 @@ function name_filter() {
     padrao="$2"
     nc=1
     declare -A passed_name
-    folder_files=()
+
     if [ $na -eq 1 ]; then  
         if [ ${#passed_filters[@]} -eq 0 ];then
             # Only search within the given directory, not subdirectories
             while IFS= read -r -d '' k; do
                 size=0
-                
+                folder_files=()
                 while IFS= read -r -d '' i; do
                     size_i=$(du -b "$i" | cut -f1)
                     size=$(($size+$size_i))
@@ -83,7 +83,7 @@ function date_filter() {
     user_date_seconds="$2"
     dc=1
     declare -A passed_date
-    folder_files=()
+
     if [ $da -eq 1 ]; then
 
         if [ ${#passed_filters[@]} -eq 0 ]; then
@@ -91,7 +91,7 @@ function date_filter() {
 
                 size=0
                 folder=$(echo "$k" | grep -P -o '(?<=\.\.\/).*')
-                
+                folder_files=()
                 while IFS= read -r -d '' i; do
                     
                     file_date=$(date -r "$i" "+%Y-%m-%d")
@@ -100,7 +100,6 @@ function date_filter() {
                     if [[ "$file_date_seconds" -le "$user_date_seconds" ]]; then
                         size_i=$(du -b "$i" | cut -f1)
                         size=$(($size+$size_i))
-                        folder_files+=("$i")
                     fi
 
                 done < <(find "$k" -type f -print0)
@@ -109,7 +108,7 @@ function date_filter() {
                 associative["$k"]="$size"
 
             done < <(find "$repository" -type d -print0)
-        else
+        else 
             for folder in "${!passed_filters[@]}"; do
                 size=0
                 array_string="${passed_filters[$folder]}"
@@ -123,7 +122,6 @@ function date_filter() {
                     if [[ "$file_date_seconds" -le "$user_date_seconds" ]]; then
                         size_j=$(du -b "$j" | cut -f1)
                         size=$(($size+$size_j))
-                        folder_files+=("$j")
                     fi
                 done
                 
@@ -240,15 +238,13 @@ function table_header_print() {
     
     header="SIZE NAME $(date +'%Y%m%d') "
     printf "%-10s %-5s %-10s" $header
-
+    
     for ((i = 1; i <= $# - 1; i++)); do
-        if is_number "$i" ; then
+        if [[ "${!i}" =~ ^[0-9]+$ ]]; then
             # Handle numeric arguments differently (without quotes)
             printf " %s" "${!i}"
         elif is_regex "${!i}"; then
             printf " \"%-4s\"" "${!i}"
-        elif date -d "${!i}" >/dev/null 2>&1; then
-            printf " %s" \""${!i}"\"
         else
             printf "%3s" "${!i}"
         fi
