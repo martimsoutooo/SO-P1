@@ -79,8 +79,6 @@ done
 args=("$@")
 
 
-
-echo "$dirs"
 # Chama funções para processar os filtros e imprimir a tabela
 for folder in ${dirs[@]}; do
     table_header_print ${args[@]}
