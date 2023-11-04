@@ -14,7 +14,7 @@ dc=1
 sc=1
 
 #Arrays
-declare -A dirs
+dirs=()
 declare -A associative
 declare -A passed_filters
 extras_podres=()
@@ -25,7 +25,8 @@ lines_printed=1
 # Itera pelos argumentos da linha de comando
 for dir in "$@"; do 
     if [ -d "$dir" ]; then 
-        dirs+="$dir"  # Define o diretório de destino se for um diretório válido
+        dirs+=("$dir")  # Define o diretório de destino se for um diretório válido
+        echo "Diretório válido: $dir"
     fi
 done
 
@@ -83,8 +84,9 @@ args=("$@")
 shift $((OPTIND-1))
 
 
+echo "$dirs"
 # Chama funções para processar os filtros e imprimir a tabela
-for folder in dirs; do
+for folder in $dirs; do
     table_header_print ${args[@]}
     no_argument "$folder"
     name_filter "$folder" "$regex"
