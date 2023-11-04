@@ -94,14 +94,14 @@ function date_filter() {
                 folder_files=()
                 while IFS= read -r -d '' i; do
                     
-                    file_date=$(date -r "$j" "+%Y-%m-%d")
-                    file_date_seconds=$(date -r "$j" +%s)
+                    file_date=$(date -r "$i" "+%Y-%m-%d")
+                    file_date_seconds=$(date -r "$i" +%s)
 
-                    
                     if [[ "$file_date_seconds" -le "$user_date_seconds" ]]; then
                         size_i=$(du -b "$i" | cut -f1)
                         size=$(($size+$size_i))
                     fi
+
                 done < <(find "$k" -type f -print0)
 
                 passed_date["$k"]=$(IFS=,; echo "${folder_files[*]}")
