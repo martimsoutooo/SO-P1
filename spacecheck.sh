@@ -9,6 +9,13 @@ da=0
 sa=0
 ra=0
 aa=0
+nc=1
+dc=1
+sc=1
+
+#Arrays
+declare -A associative
+declare -A passed_filters
 
 max="Default"
 lines_printed=1
@@ -27,6 +34,7 @@ while getopts "n:d:s:l:ra" opt; do
             regex=$OPTARG
             if is_regex "$regex"; then 
                 na=1
+                nc=0
             else
                 echo "Falta ou regex inválida."
             fi
@@ -38,7 +46,8 @@ while getopts "n:d:s:l:ra" opt; do
             # Verifica se a data fornecida é válida
             if date -d "$lastDate" >/dev/null 2>&1; then                                       
                 lDate=$(date --date="$lastDate" +"%s")  # Converte a data para segundos desde a época
-                da=1                                     
+                da=1   
+                dc=0                                  
             else 
                 echo "Erro: Data de início inválida"
                 exit 1
@@ -47,6 +56,7 @@ while getopts "n:d:s:l:ra" opt; do
         s)
             minsize="$OPTARG"
             sa=1
+            sc=0
             ;;
         r)
             ra=1
@@ -68,9 +78,10 @@ done
 
 # Chama funções para processar os filtros e imprimir a tabela
 table_header_print $@
+no_argument "$target_directory"
 name_filter "$target_directory" "$regex"
 size_filter "$target_directory" "$minsize"
 date_filter "$target_directory" "$lDate"
-alphabetic_order "$target_directory"
+
 
 
