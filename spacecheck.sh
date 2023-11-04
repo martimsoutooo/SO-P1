@@ -77,6 +77,8 @@ while getopts "n:d:s:l:ra" opt; do
     esac
 done
 
+args=("$@")
+
 shift $((OPTIND-1))
 for arg in "$@"; do
     extras_podres+=("$arg")
@@ -88,7 +90,7 @@ if [ ${#extras_podres[@]} -gt 1 ]; then
 fi
 
 # Chama funções para processar os filtros e imprimir a tabela
-table_header_print $@
+table_header_print ${args[@]}
 no_argument "$target_directory"
 name_filter "$target_directory" "$regex"
 size_filter "$target_directory" "$minsize"
