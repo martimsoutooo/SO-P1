@@ -184,9 +184,12 @@ function date_filter() {
             for folder in "${!passed_filters[@]}"; do
                 size=0
                 folder_files=()
+                echo "ola"
                 array_string="${passed_filters[$folder]}"
-                IFS=, read -ra folder_files <<< "$array_string"
-                for j in "${folder_files[@]}"; do
+                
+                IFS=, read -ra folder_files_2 <<< "$array_string"
+                echo "po ${folder_files[*]}"
+                for j in "${folder_files_2[@]}"; do
                     
                     file_date=$(date -r "$j" "+%Y-%m-%d")
                     file_date_seconds=$(date -r "$j" +%s)
@@ -195,8 +198,17 @@ function date_filter() {
                         size_j=$(du -b "$j" | cut -f1)
                         size=$(($size+$size_j))
                         folder_files+=("$j")
+                        echo "$j"
                     fi
                 done
+
+
+                echo "oioi"
+                echo "$folder"
+                for i in "${folder_files[@]}"; do
+                    echo "$i"
+                done
+
                 
                 passed_date["$folder"]=$(IFS=,; echo "${folder_files[*]}")
                 associative["$folder"]="$size"
