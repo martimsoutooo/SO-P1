@@ -79,6 +79,11 @@ function name_filter() {
             # isto associa um folder a uma string de files filtrados
         done
         
+        for key in "${!passed_name[@]}"; do
+            unset passed_name["$key"]
+        done
+
+
         table_line_print
     fi
 }
@@ -144,6 +149,9 @@ function size_filter() {
             fi
             passed_filters["$i"]+="${passed_size[$i]}"
         done
+        for key in "${!passed_size[@]}"; do
+            unset passed_sized["$key"]
+        done
         
         table_line_print
     fi
@@ -152,6 +160,7 @@ function size_filter() {
 
 
 function date_filter() {
+
     repository="$1"
     user_date_seconds="$2"
     dc=1
@@ -182,7 +191,6 @@ function date_filter() {
 
             done < <(find "$repository" -type d -print0)
         else
-            
             for folder in "${!passed_filters[@]}"; do
                 size=0
                 folder_files=()
@@ -218,7 +226,9 @@ function date_filter() {
                 passed_filters["$i"]+="${passed_date[$i]}"
                 
         done
-
+        for key in "${!passed_date[@]}"; do
+            unset passed_date["$key"]
+        done
         
         table_line_print
     fi
@@ -237,39 +247,47 @@ function is_regex() {
 }
 
 function is_number() {
-    local re='^[1-9][0-9]*$'
+    local re='^[0-9]+$'
     if [[ $1 =~ $re ]]; then
-        return 0  # Success (true)
+        return 0 
     else
-        return 1  # Failure (false)
+        return 1  
     fi
 }
 
 function table_header_print() {
-    
-    header="SIZE NAME $(date +'%Y%m%d') "
-    printf "%-10s %-5s %-10s" $header
-    
-    for i in "${args[@]}"; do     
-        if is_number "$i"; then
-            # Handle numeric arguments differently (without quotes)
-            printf " %s" "$i"
-        elif is_regex "$i"; then
-            printf " \"%-4s\"" "$i"
-        elif [ -d "$i" ]; then
-            continue
-        else
-            printf " %3s" "$i"
-        fi
-    done
-    
-    printf "%3s \n" $(basename "${!#}") 
+    if [ $folder_count -eq "${#dirs[@]}" ]; then
 
+        header="SIZE NAME $(date +'%Y%m%d') "
+        printf "%-10s %-5s %-10s" $header
+        diretorios=()
+    
+        for i in "${args[@]}"; do     
+            if is_number "$i"; then
+                # Handle numeric arguments differently (without quotes)
+                printf " %s" "$i"
+            elif is_regex "$i"; then
+                printf " \"%s\" " "$i"
+            elif [ -d "$i" ]; then
+                diretorios+=("$i")
+                continue
+            elif [[ "$i" =~ ^[A-Z][a-z]{2}\ [0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]; then
+                printf " \"%3s\" " "$i"
+            else
+                printf " %s " "$i"
+            fi
+        done
+        for i in "${diretorios[@]}"; do
+            printf "%s " $(basename "$i") 
+        done
+        printf "\n" ""
+    fi
+    
 }
 
 function table_line_print() {
 
-    if [ $dc -eq 1 ] && [ $nc -eq 1 ] && [ $sc -eq 1 ]; then
+    if [ $dc -eq 1 ] && [ $nc -eq 1 ] && [ $sc -eq 1 ] && [ $folder_count -eq "${#dirs[@]}" ]; then
 
         if [ $aa -eq 1 ] && [ $ra -eq 1 ]; then
             folders=($(echo "${!associative[@]}" | tr ' ' '\n' | sort -r ))
@@ -295,4 +313,9 @@ function table_line_print() {
             fi
         done
     fi
+}
+
+# ESTA FUNCAO VAI RETURNAR 0 QUANDO TUDO ESTIVER OK PARA DAR PRINT
+function all_checked(){
+    return 0
 }
