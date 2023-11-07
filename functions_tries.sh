@@ -263,16 +263,11 @@ function table_header_print() {
         diretorios=()
     
         for i in "${args[@]}"; do     
-            if is_number "$i"; then
-                # Handle numeric arguments differently (without quotes)
-                printf " %s" "$i"
-            elif is_regex "$i"; then
+            if is_regex "$i" || [[ "$i" =~ ^[A-Z][a-z]{2}\ [0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]; then
                 printf " \"%s\" " "$i"
             elif [ -d "$i" ]; then
                 diretorios+=("$i")
                 continue
-            elif [[ "$i" =~ ^[A-Z][a-z]{2}\ [0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]; then
-                printf " \"%3s\" " "$i"
             else
                 printf " %s " "$i"
             fi
@@ -287,7 +282,7 @@ function table_header_print() {
 
 function table_line_print() {
 
-    if [ $dc -eq 1 ] && [ $nc -eq 1 ] && [ $sc -eq 1 ] && [ $folder_count -eq "${#dirs[@]}" ]; then
+    if [ $dc -eq 1 ] && [ $nc -eq 1 ] && [ $sc -eq 1 ] && [ $folder_count -eq "${#dirs[@]}" ] && [ $name_counter -eq "${#regex_ar[@]}" ]; then
 
         if [ $aa -eq 1 ] && [ $ra -eq 1 ]; then
             folders=($(echo "${!associative[@]}" | tr ' ' '\n' | sort -r ))
@@ -317,5 +312,8 @@ function table_line_print() {
 
 # ESTA FUNCAO VAI RETURNAR 0 QUANDO TUDO ESTIVER OK PARA DAR PRINT
 function all_checked(){
-    return 0
+    
+    if [ $dc -eq 1 ] && [ $nc -eq 1 ] && [ $sc -eq 1 ] && [ $folder_count -eq "${#dirs[@]}" ] && [ $name_counter -eq "${#regex_ar[@]}" ]; then
+        return 0
+    fi
 }

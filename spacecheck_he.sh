@@ -31,8 +31,6 @@ for dir in "$@"; do
 done
 
 regex_ar=()
-date_arc=()
-size_arc=()
 
 # Processa as opções da linha de comando com getopts
 while getopts "n:d:s:l:ra" opt; do 
@@ -54,7 +52,6 @@ while getopts "n:d:s:l:ra" opt; do
             if [[ "$lastDate" =~ ^[A-Z][a-z]{2}\ [0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]; then
                 if date -d "$lastDate" >/dev/null 2>&1; then
                     lDate=$(date --date="$lastDate" +"%s") # Converte a data para segundos desde a época
-                    date_arc+=($lDate)
                     da=1   
                     dc=0                                  
                 else 
@@ -69,7 +66,6 @@ while getopts "n:d:s:l:ra" opt; do
         s)
             minsize="$OPTARG"
             if is_number "$minsize"; then
-                size_arc+=($minsize)
                 sa=1
                 sc=0
             else
@@ -102,6 +98,7 @@ args=("$@")
 
 # Chama funções para processar os filtros e imprimir a tabela
 for folder in ${dirs[@]}; do
+    name_counter=0
     folder_count=$(($folder_count+1))
     for key in "${!passed_filters[@]}"; do
         unset passed_filters["$key"]
@@ -112,12 +109,11 @@ for folder in ${dirs[@]}; do
     table_header_print "${args[@]}"
     no_argument "$folder"
     for i in "${regex_ar[@]}"; do
+        name_counter=$(($name_counter+1))
         name_filter "$folder" "$i"
+        
     done
-    for k in "${date_arc[@]}"; do
-        date_filter "$folder" "$k"
-    done
-
+    date_filter "$folder" "$lDate"
     size_filter "$folder" "$minsize"
     
 done
