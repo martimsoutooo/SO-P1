@@ -1,21 +1,24 @@
 #!/bin/bash
 
+# Inicialize as variáveis ​​de opção para desativado
 reverse=0
 alphabetical=0
-files=()
+
+files=() # array para armazenar os nomes dos arquivos de entrada
 
 while getopts "ra" opt; do
     case $opt in
         r)
-        reverse=1
+        reverse=1               # reverse ativo
         ;;
         a)
-        alphabetical=1
+        alphabetical=1          # alphabetical ativo
         ;;
     esac
 done
 shift $((OPTIND -1))
 
+# Verificar se os argumentos fornecidos são ficheiros
 for file in "$@"; do
     if [ -f "$file" ]; then
         files+=("$file")
@@ -24,6 +27,7 @@ for file in "$@"; do
     fi
 done
 
+# Verifique se o número de arquivos fornecidos é exatamente 2
 if [ ${#files[@]} -ne 2 ]; then
     echo "This script requires exactly two input files to compare."
     exit 1
@@ -40,29 +44,29 @@ while read -r line; do
     fi
 done < "${files[1]}"
 
-output=()
+output=()   # array para armazenar as informações de saída
 
 while read -r line; do
     if [[ "$line" == *"SIZE"* ]]; then
-        continue
+        continue                            # saltar a linha de cabeçalho
     fi
 
-    size_new=$(echo "$line" | awk '{print $1}')
-    folder_new=$(echo "$line" | awk '{print $2}')
+    size_new=$(echo "$line" | awk '{print $1}')  # armazenar o tamanho da pasta
+    folder_new=$(echo "$line" | awk '{print $2}')   # armazenar o nome da pasta
 
     if [[ ! "${folders_older[$folder_new]+_}" ]]; then
-        output+=("$size_new $folder_new NEW")
+        output+=("$size_new $folder_new NEW")           # verificar se o array com os folders antigos tem a pasta, se tiver adiciona ao output com o status NEW
     else
         size_older=${folders_older[$folder_new]}
-        unset "folders_older[$folder_new]"
+        unset "folders_older[$folder_new]"          
 
-        if [ "$size_new" -gt "$size_older" ]; then
+        if [ "$size_new" -gt "$size_older" ]; then      # verificar se o tamanho da pasta nova é maior que a pasta antiga
             size_diff=$((size_new - size_older))
             output+=("$size_diff $folder_new")
-        elif [ "$size_new" -lt "$size_older" ]; then
+        elif [ "$size_new" -lt "$size_older" ]; then        # verificar se o tamanho da pasta nova é menor que a pasta antiga
             size_diff=$((size_older - size_new))
             output+=("-$size_diff $folder_new")
-        else
+        else                                                # verificar se o tamanho da pasta nova é igual que a pasta antiga
             output+=("0 $folder_new")
         fi
     fi
@@ -70,15 +74,15 @@ done < "${files[0]}"
 
 # Verifique se há pastas removidas no arquivo mais antigo
 for folder_older in "${!folders_older[@]}"; do
-    size_older=${folders_older[$folder_older]}
-    output+=("-$size_older $folder_older REMOVED")
+    size_older=${folders_older[$folder_older]}              
+    output+=("-$size_older $folder_older REMOVED")      # adiciona ao output com o status REMOVED as pastas removidas
 done
 
 # Imprimir o array de saída de acordo com as opções
 if [ $reverse -eq 1 ]; then
     if [ $alphabetical -eq 1 ]; then
         printf "%-10s %-20s   %s\n" "SIZE" "NAME" "STATUS"
-        printf "%s\n" "${output[@]}" | sort -r | awk '{printf "%-10s %-20s   %s\n", $1, $2, $3}'
+        printf "%s\n" "${output[@]}" | sort -r | awk '{printf "%-10s %-20s   %s\n", $1, $2, $3}'            
     else
         printf "%-10s %-20s   %s\n" "SIZE" "NAME" "STATUS"
         printf "%s\n" "${output[@]}" | tac | awk '{printf "%-10s %-20s   %s\n", $1, $2, $3}'
