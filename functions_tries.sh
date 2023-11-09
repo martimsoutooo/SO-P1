@@ -135,8 +135,6 @@ function size_filter() {
                 associative["$folder"]="$size"
             done
             
-
-            
         fi
         
         for key in "${!passed_filters[@]}"; do
@@ -156,8 +154,6 @@ function size_filter() {
         table_line_print
     fi
 }
-
-
 
 function date_filter() {
 
@@ -283,7 +279,6 @@ function table_header_print() {
 function table_line_print() {
 
     if [ $dc -eq 1 ] && [ $nc -eq 1 ] && [ $sc -eq 1 ] && [ $folder_count -eq "${#dirs[@]}" ] && [ $name_counter -eq "${#regex_ar[@]}" ]; then
-
         if [ $aa -eq 1 ] && [ $ra -eq 1 ]; then
             folders=($(echo "${!associative[@]}" | tr ' ' '\n' | sort -r ))
         elif [ $aa -eq 1 ]; then
@@ -307,13 +302,6 @@ function table_line_print() {
                 fi
             fi
         done
-    fi
-}
-
-# ESTA FUNCAO VAI RETURNAR 0 QUANDO TUDO ESTIVER OK PARA DAR PRINT
-function all_checked(){
-    
-    if [ $dc -eq 1 ] && [ $nc -eq 1 ] && [ $sc -eq 1 ] && [ $folder_count -eq "${#dirs[@]}" ] && [ $name_counter -eq "${#regex_ar[@]}" ]; then
-        return 0
+        exit 0
     fi
 }
