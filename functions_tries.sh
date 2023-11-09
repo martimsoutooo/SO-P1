@@ -255,21 +255,21 @@ function table_header_print() {
     if [ $folder_count -eq "${#dirs[@]}" ]; then
 
         header="SIZE NAME $(date +'%Y%m%d') "
-        printf "%-10s %-5s %-10s" $header
+        printf "% s % s % s" $header
         diretorios=()
     
         for i in "${args[@]}"; do     
             if is_regex "$i" || [[ "$i" =~ ^[A-Z][a-z]{2}\ [0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]; then
-                printf " \"%s\" " "$i"
+                printf " \"%s\"" "$i"
             elif [ -d "$i" ]; then
                 diretorios+=("$i")
                 continue
             else
-                printf " %s " "$i"
+                printf " %s" "$i"
             fi
         done
         for i in "${diretorios[@]}"; do
-            printf "%s " $(basename "$i") 
+            printf " %s" $(basename "$i") 
         done
         printf "\n" ""
     fi
@@ -294,10 +294,10 @@ function table_line_print() {
             folder_pretty=$(echo "${i}" | grep -P -o '(?<=\.\.\/).*')
             size="${associative[$i]}" 
             if [ "$max" == "Default" ]; then
-                printf "%-10s %-5s \n" "$size" "$folder_pretty"
+                printf "% s % s \n" "$size" "$folder_pretty"
             else
                 if [ $lines_printed -le $max ]; then             
-                    printf "%-10s %-5s \n" "$size" "$folder_pretty"
+                    printf "% s % s \n" "$size" "$folder_pretty"
                     lines_printed=$(($lines_printed+1))
                 fi
             fi
