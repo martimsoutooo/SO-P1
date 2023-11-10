@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 # Importa funções do ficheiro functions.sh
@@ -130,4 +131,5 @@ for folder in ${dirs[@]}; do
     size_filter "$folder" "$minsize"
     
 done
+
 

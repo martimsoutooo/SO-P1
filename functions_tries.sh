@@ -166,11 +166,9 @@ function date_filter() {
 
         if [ ${#passed_filters[@]} -eq 0 ]; then
             while IFS= read -r -d '' k; do
-
                 size=0
                 folder_files=()
                 while IFS= read -r -d '' i; do
-                    
                     file_date=$(date -r "$i" "+%Y-%m-%d")
                     file_date_seconds=$(date -r "$i" +%s)
 
@@ -179,13 +177,16 @@ function date_filter() {
                         size=$(($size+$size_i))
                         folder_files+=("$i")
                     fi
+                    
 
-                done < <(find "$k" -type f -print0)
+                done < <(find "$k" -type f -print0 2>/dev/null)
+                
 
                 passed_date["$k"]=$(IFS=,; echo "${folder_files[*]}")
                 associative["$k"]="$size"
 
-            done < <(find "$repository" -type d -print0)
+            done < <(find "$repository" -type d -print0 2>/dev/null)
+        
         else
             for folder in "${!passed_filters[@]}"; do
                 size=0
@@ -291,8 +292,13 @@ function table_line_print() {
         fi
 
         for i in "${folders[@]}"; do
-            folder_pretty=$(echo "${i}" | grep -P -o '(?<=\.\.\/).*')
+            folder_pretty=$(echo "${i}" | grep -P -o '(?<=\.\.\/).*' | sed 's/\.\.\///g')
+ 
             size="${associative[$i]}" 
+            if [ -z $size ]; then
+                size="NA"
+            fi
+
             if [ "$max" == "Default" ]; then
                 printf "% s % s \n" "$size" "$folder_pretty"
             else
