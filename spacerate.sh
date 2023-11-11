@@ -74,25 +74,25 @@ done < "${files[0]}"
 
 # Verifique se há pastas removidas no arquivo mais antigo
 for folder_older in "${!folders_older[@]}"; do
-    size_older=${folders_older[$folder_older]}              
+    size_older=${folders_older[$folder_older]}             
     output+=("-$size_older $folder_older REMOVED")      # adiciona ao output com o status REMOVED as pastas removidas
 done
 
 # Imprimir o array de saída de acordo com as opções
 if [ $reverse -eq 1 ]; then
     if [ $alphabetical -eq 1 ]; then
-        printf "%-10s %-20s   %s\n" "SIZE" "NAME" "STATUS"
-        printf "%s\n" "${output[@]}" | sort -r | awk '{printf "%-10s %-20s   %s\n", $1, $2, $3}'            
+        printf "%s %s %s\n" "SIZE" "NAME" 
+        printf "%s\n" "${output[@]}" | sort -r | awk '{printf "%s %s %s\n", $1, $2, $3}'            
     else
-        printf "%-10s %-20s   %s\n" "SIZE" "NAME" "STATUS"
-        printf "%s\n" "${output[@]}" | tac | awk '{printf "%-10s %-20s   %s\n", $1, $2, $3}'
+        printf "%s %-s %s\n" "SIZE" "NAME" 
+        printf "%s\n" "${output[@]}" | tac | awk '{printf "%s %s %s\n", $1, $2, $3}'
     fi
 else
     if [ $alphabetical -eq 1 ]; then
-        printf "%-10s %-20s   %s\n" "SIZE" "NAME" "STATUS"
-        printf "%s\n" "${output[@]}" | sort | awk '{printf "%-10s %-20s   %s\n", $1, $2, $3}'
+        printf "%s %s %s\n" "SIZE" "NAME"
+        printf "%s\n" "${output[@]}" | sort | awk '{printf "%s %s %s\n", $1, $2, $3}'
     else
-        printf "%-10s %-20s   %s\n" "SIZE" "NAME" "STATUS"
-        printf "%s\n" "${output[@]}" | awk '{printf "%-10s %-20s   %s\n", $1, $2, $3}'
+        printf "%s %s\n" "SIZE" "NAME" 
+        printf "%s\n" "${output[@]}" | awk '{printf "%s %s %s\n", $1, $2, $3}'
     fi
 fi

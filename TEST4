@@ -1,9 +1,10 @@
-SIZE       NAME  20231108   -n  ".*sh"  -d  "Oct 31 13:00" SO 
-13903      SO    
-1957       SO/Aula02  
-0          SO/.vscode 
+SIZE       NAME  20231108   -n  ".*sh"  -d  "Oct 31 16:00" SO 
+15000      SO    
+6577	   SO/Aula03 
+65	       SO/Aula10
+0          SO/Aula05 
 0          SO/Aula03/teste 
 0          SO/Aula02/Ficheiros7b 
-0          SO/Aula02/Ficheiros7a 
-0          SO/Aula01 
-400       	SO/Aula09
+0          SO/Aula02/Ficheiros7a
+400        SO/Aula09 
+20         SO/Aula01 
