@@ -292,17 +292,17 @@ function table_line_print() {
         fi
 
         for i in "${folders[@]}"; do
-            folder_pretty=$(echo "${i}" | grep -P -o '(?<=\.\.\/|^\.\.\/|^\.\/).*')
+            folder_pretty=$(echo "${i}" | sed -e 's/\.\.\///g' -e 's/\.\///g')
             size="${associative[$i]}" 
             if [ -z $size ]; then
                 size="NA"
             fi
 
             if [ "$max" == "Default" ]; then
-                printf "% s % s \n" "$size" "$i"
+                printf "% s % s \n" "$size" "$folder_pretty"
             else
                 if [ $lines_printed -le $max ]; then             
-                    printf "% s % s \n" "$size" "$i"
+                    printf "% s % s \n" "$size" "$folder_pretty"
                     lines_printed=$(($lines_printed+1))
                 fi
             fi
