@@ -157,15 +157,15 @@ function size_filter() {
 
 function date_filter() {
 
-    repository="$1"
-    user_date_seconds="$2"
-    dc=1
-    declare -A passed_date
+    repository="$1"                      # pasta a ser filtrada
+    user_date_seconds="$2"               # data em segundos   
+    dc=1                                 
+    declare -A passed_date                  # array associativo para guardar os folders e os respetivos tamanhos
 
     if [ $da -eq 1 ]; then
 
-        if [ ${#passed_filters[@]} -eq 0 ]; then
-            while IFS= read -r -d '' k; do
+        if [ ${#passed_filters[@]} -eq 0 ]; then            
+            while IFS= read -r -d '' k; do              
                 size=0
                 folder_files=()
                 while IFS= read -r -d '' i; do
