@@ -35,7 +35,8 @@ fi
 
 # Crie um array associativo para armazenar as informações do arquivo mais antigo
 declare -A folders_older
-while read -r line; do
+
+while IFS=' ' read -r line; do
     if [[ "$line" != *"SIZE"* ]]; then
         folder_older=$(echo "$line" | awk '{print $2}')
         size_older=$(echo "$line" | awk '{print $1}')
@@ -44,9 +45,16 @@ while read -r line; do
     fi
 done < "${files[1]}"
 
+# captura a ultima linha caso esta nao acabe com \n  
+if [ -n "$line" ]; then
+    folder_older=$(echo "$line" | awk '{print $2}')
+    size_older=$(echo "$line" | awk '{print $1}')
+    folders_older["$folder_older"]=$size_older
+fi
+
 output=()   # array para armazenar as informações de saída
 
-while read -r line; do
+while IFS=' ' read -r line; do
     if [[ "$line" == *"SIZE"* ]]; then
         continue                            # saltar a linha de cabeçalho
     fi
@@ -72,27 +80,49 @@ while read -r line; do
     fi
 done < "${files[0]}"
 
+#mais uma vez procura por uma linha que nao acabe em \n
+
+if [ -n "$line" ]; then
+    size_new=$(echo "$line" | awk '{print $1}')
+    folder_new=$(echo "$line" | awk '{print $2}')
+
+    if [[ ! "${folders_older[$folder_new]+_}" ]]; then
+        output+=("$size_new $folder_new NEW")
+    else
+        size_older=${folders_older[$folder_new]}
+        unset "folders_older[$folder_new]"
+
+        if [ "$size_new" -gt "$size_older" ]; then
+            size_diff=$((size_new - size_older))
+            output+=("$size_diff $folder_new")
+        elif [ "$size_new" -lt "$size_older" ]; then
+            size_diff=$((size_older - size_new))
+            output+=("-$size_diff $folder_new")
+        else
+            output+=("0 $folder_new")
+        fi
+    fi
+fi
+
+
 # Verifique se há pastas removidas no arquivo mais antigo
 for folder_older in "${!folders_older[@]}"; do
     size_older=${folders_older[$folder_older]}             
     output+=("-$size_older $folder_older REMOVED")      # adiciona ao output com o status REMOVED as pastas removidas
 done
 
+printf "%s %s\n" "SIZE" "NAME" 
+
 # Imprimir o array de saída de acordo com as opções
-if [ $reverse -eq 1 ]; then
-    if [ $alphabetical -eq 1 ]; then
-        printf "%s %s %s\n" "SIZE" "NAME" 
-        printf "%s\n" "${output[@]}" | sort -r | awk '{printf "%s %s %s\n", $1, $2, $3}'            
-    else
-        printf "%s %-s %s\n" "SIZE" "NAME" 
-        printf "%s\n" "${output[@]}" | tac | awk '{printf "%s %s %s\n", $1, $2, $3}'
-    fi
-else
-    if [ $alphabetical -eq 1 ]; then
-        printf "%s %s %s\n" "SIZE" "NAME"
-        printf "%s\n" "${output[@]}" | sort | awk '{printf "%s %s %s\n", $1, $2, $3}'
-    else
-        printf "%s %s\n" "SIZE" "NAME" 
-        printf "%s\n" "${output[@]}" | awk '{printf "%s %s %s\n", $1, $2, $3}'
-    fi
+
+if [ $alphabetical -eq 1 ] && [ $reverse -eq 1 ]; then
+    printf "%s\n" "${output[@]}" | awk '{print substr($0, index($0,$2)) "\t" $0}' | sort -r | awk 'BEGIN{FS="\t"}{print $2}'
+elif [ $alphabetical -eq 1 ]; then
+    printf "%s\n" "${output[@]}" | awk '{print substr($0, index($0,$2)) "\t" $0}' | sort | awk 'BEGIN{FS="\t"}{print $2}'
+
+elif [ $reverse -eq 1 ]; then
+    printf "%s\n" "${output[@]}" | sort -n -r | awk '{printf "%s %s %s\n", $1, $2, $3}' | tac
+else 
+    # POR DEFAUT IMPRIME POR SIZE 
+    printf "%s\n" "${output[@]}" | sort -n -r | awk '{printf "%s %s %s\n", $1, $2, $3}'
 fi
