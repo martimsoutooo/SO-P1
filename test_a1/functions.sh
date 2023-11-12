@@ -35,14 +35,14 @@ function name_filter() {
                     size_i=$(du -b "$i" | cut -f1)
                     size=$(($size+$size_i))
                     folder_files+=("$i")
-                done < <(find "$k" -type f -regex ".*$padrao.*" -print0)
+                done < <(find "$k" -type f -regex ".*$padrao.*" -print0 2>/dev/null)
                 
                 # COnVERTER O ARRAY NUMA STRING PARA PODER GUARDAR
                 # A VIRGULA GUARDA OS ELEMENTOS DO ARRAY SEPARADOS POR UMA VIRGULA
                 passed_name["$k"]=$(IFS=,; echo "${folder_files[*]}")
                 associative["$k"]="$size"
             
-            done < <(find "$repository" -type d -print0)
+            done < <(find "$repository" -type d -print0 2>/dev/null)
             
         else
             # run through the files previoulsy filtered and filter AGAIN
@@ -107,14 +107,14 @@ function size_filter() {
                         size=$(($size+$size_i))
                         folder_files+=("$i")
                     fi
-                done < <(find "$k" -type f -print0)        
+                done < <(find "$k" -type f -print0 2>/dev/null)        
                  # EXECUTA O COMANDO E LE O OUTPUT COMO SE FOSSE UMA LINHA
                 # < QUER LER UM FICHEIRO, <() METE O CONTENT DOS ()A SER LIDOS COMO FILE
 
                 passed_size["$k"]=$(IFS=,; echo "${folder_files[*]}")
                 associative["$k"]="$size"
 
-            done < <(find "$repository" -type d -print0)
+            done < <(find "$repository" -type d -print0 2>/dev/null)
 
         else
             for folder in "${!passed_filters[@]}"; do
