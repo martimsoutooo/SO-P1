@@ -23,6 +23,7 @@ args_bons=()
 max="Default"
 lines_printed=1
 folder_count=0
+errors=()
 
 # Itera pelos argumentos da linha de comando
 for dir in "$@"; do 
