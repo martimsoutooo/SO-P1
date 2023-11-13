@@ -67,8 +67,10 @@ while IFS=' ' read -r line; do
     else
         size_older=${folders_older[$folder_new]}
         unset "folders_older[$folder_new]"          
-
-        if [ "$size_new" -gt "$size_older" ]; then      # verificar se o tamanho da pasta nova é maior que a pasta antiga
+        if [ "$size_older" = "NA" ] || [ "$size_new" = "NA" ]; then
+            size_diff="NA"
+            output+=("$size_diff $folder_new")
+        elif [ "$size_new" -gt "$size_older" ]; then      # verificar se o tamanho da pasta nova é maior que a pasta antiga
             size_diff=$((size_new - size_older))
             output+=("$size_diff $folder_new")
         elif [ "$size_new" -lt "$size_older" ]; then        # verificar se o tamanho da pasta nova é menor que a pasta antiga
@@ -89,10 +91,15 @@ if [ -n "$line" ]; then
     if [[ ! "${folders_older[$folder_new]+_}" ]]; then
         output+=("$size_new $folder_new NEW")
     else
+        
         size_older=${folders_older[$folder_new]}
         unset "folders_older[$folder_new]"
 
-        if [ "$size_new" -gt "$size_older" ]; then
+        if [ "$size_older" = "NA" ] || [ "$size_new" = "NA" ]; then
+            size_diff="NA"
+            output+=("$size_diff $folder_new")
+
+        elif [ "$size_new" -gt "$size_older" ]; then
             size_diff=$((size_new - size_older))
             output+=("$size_diff $folder_new")
         elif [ "$size_new" -lt "$size_older" ]; then

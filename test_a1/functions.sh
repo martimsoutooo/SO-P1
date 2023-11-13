@@ -9,11 +9,11 @@ function no_argument() {
             while IFS= read -r -d '' i; do # guarda o file na variable i
                 size_i=$(du -b "$i" | cut -f1) # encontra o tamanho do file
                 size=$(($size+$size_i))
-            done < <(find "$k" -type f -print0) # encontra todos os files dentro do diretorio k
+            done < <(find "$k" -type f -print0 2>/dev/null) # encontra todos os files dentro do diretorio k
             
             associative["$k"]="$size" # guarda o tamanho como value da key folder
         
-        done < <(find "$directory" -type d -print0) # encontra todos os subdiretorios dentro do diretorio dado
+        done < <(find "$directory" -type d -print0 2>/dev/null) # encontra todos os subdiretorios dentro do diretorio dado
         
         table_line_print # imprime a tabela
     fi
@@ -28,36 +28,55 @@ function name_filter() {
     if [ $na -eq 1 ]; then # verifica se a função foi ativada 
         if [ ${#passed_filters[@]} -eq 0 ];then # verifica se a função foi a primeira a ser corrida ou se houve uma filtragem previamente            
             while IFS= read -r -d '' k; do
-                size=0
-                folder_files=()
-                while IFS= read -r -d '' i; do
-                    size_i=$(du -b "$i" | cut -f1)
-                    size=$(($size+$size_i))
-                    folder_files+=("$i")
-                done < <(find "$k" -type f -regex ".*$padrao.*" -print0 2>/dev/null) # se for encontrado um erro no find, o erro é redirecionado para o /dev/null
-
+                if [ -r "$k" ]; then # verificar se a pasta é readable
+                    size=0
+                    folder_files=()
+                    while IFS= read -r -d '' i; do
+                        if [ -r "$i" ]; then # verifica se o file é readable
+                            size_i=$(du -b "$i" | cut -f1)
+                            size=$(($size+$size_i))
+                            folder_files+=("$i")
+                        else 
+                            size="NA" # se não, size=NA e passa para a next iteration
+                            break
+                        fi
+                    done < <(find "$k" -type f -regex ".*$padrao.*" -print0 2>/dev/null) # se for encontrado um erro no find, o erro é redirecionado para o /dev/null
+                else 
+                    size="NA" # se não, size=NA e passa para a next iteration
+                fi
                 # O array de ficheiros filtrados é convertido numa string 
                 passed_name["$k"]=$(IFS=,; echo "${folder_files[*]}")
                 associative["$k"]="$size"
-            
+                
             done < <(find "$directory" -type d -print0 2>/dev/null)
+
             
         else
             # Pega no array que contem os ficheiros que passaram os filtros e filtra novamente
             for folder in "${!passed_filters[@]}"; do
-                size=0
-                folder_files=()
-                array_string="${passed_filters[$folder]}"
+                if [ -r "$folder" ]; then
+                    size=0
+                    folder_files=()
+                    array_string="${passed_filters[$folder]}"
 
-                # Reconverte a string que contem os ficheiros filtrados num array
-                IFS=, read -ra folder_files_before <<< "$array_string" 
-                for j in "${folder_files_before[@]}"; do
-                    if [[ $j =~ $padrao ]]; then
-                        size_i=$(du -b "$j" | cut -f1)
-                        size=$(($size+$size_i))
-                        folder_files+=("$j")
-                    fi
-                done
+                    # Reconverte a string que contem os ficheiros filtrados num array
+                    IFS=, read -ra folder_files_before <<< "$array_string" 
+                    for j in "${folder_files_before[@]}"; do
+                        if [ -r "$j"]; then
+                            if [[ $j =~ $padrao ]]; then
+                                size_i=$(du -b "$j" | cut -f1)
+                                size=$(($size+$size_i))
+                                folder_files+=("$j")
+                            fi
+                        else
+                            size="NA"
+                            break
+                        fi
+                    done
+                else
+                    size="NA"
+                fi
+
                 passed_name["$folder"]=$(IFS=,; echo "${folder_files[*]}") # guarda num array associativo os files que passaram o filtro
                 associative["$folder"]="$size"
             done
@@ -98,17 +117,26 @@ function size_filter() {
         
         if [ ${#passed_filters[@]} -eq 0 ];then
             while IFS= read -r -d '' k; do 
-            
-                size=0
-                folder_files=()              
-                while IFS= read -r -d '' i; do
-                    size_i=$(du -b "$i" | cut -f1)
+                if [ -r "$k" ]; then
 
-                    if [ $size_i -ge $minsize ]; then
-                        size=$(($size+$size_i))
-                        folder_files+=("$i")
-                    fi
-                done < <(find "$k" -type f -print0 2>/dev/null)        
+                    size=0
+                    folder_files=()              
+                    while IFS= read -r -d '' i; do                      
+                        if [ -r "$i" ]; then 
+                            size_i=$(du -b "$i" | cut -f1)
+                            if [ $size_i -ge $minsize ]; then
+                                size=$(($size+$size_i))
+                                folder_files+=("$i")
+                            fi
+                        else
+                            size="NA"
+                            break
+                        fi
+                    done < <(find "$k" -type f -print0 2>/dev/null) 
+                else
+                    size="NA"
+                fi
+
                 # Executa o comando e lê o output do comando, o output é lido como um ficheiro
                 # < Quer ler um ficheiro, <() mete o content dos () a ser lidos como file
 
@@ -119,18 +147,27 @@ function size_filter() {
 
         else
             for folder in "${!passed_filters[@]}"; do
-                size=0
-                folder_files=()
-                array_string="${passed_filters[$folder]}"
+                if [ -r "$folder" ]; then
+                    size=0
+                    folder_files=()
+                    array_string="${passed_filters[$folder]}"
 
-                IFS=, read -ra folder_files_before <<< "$array_string"
-                for j in "${folder_files_before[@]}"; do
-                    size_i=$(du -b "$j" | cut -f1)
-                    if [ $size_i -ge $minsize ]; then
-                        size=$(($size+$size_i))
-                        folder_files+=("$j")
-                    fi
-                done
+                    IFS=, read -ra folder_files_before <<< "$array_string"
+                    for j in "${folder_files_before[@]}"; do
+                        if [ -r "$j" ]; then
+                            size_i=$(du -b "$j" | cut -f1)
+                            if [ $size_i -ge $minsize ]; then
+                                size=$(($size+$size_i))
+                                folder_files+=("$j")
+                            fi
+                        else
+                            size="NA"
+                            break
+                        fi
+                    done
+                else 
+                    size="NA"
+                fi
 
                 passed_size["$folder"]=$(IFS=,; echo "${folder_files[*]}")
                 associative["$folder"]="$size"
@@ -167,21 +204,29 @@ function date_filter() {
 
         if [ ${#passed_filters[@]} -eq 0 ]; then
             while IFS= read -r -d '' k; do
-                size=0
-                folder_files=()
-                while IFS= read -r -d '' i; do
-                    file_date=$(date -r "$i" "+%Y-%m-%d")
-                    file_date_seconds=$(date -r "$i" +%s) # converte a data para segundos
+                if [ -r "$k" ]; then
+                    size=0
+                    folder_files=()
+                    while IFS= read -r -d '' i; do
+                        if [ -r "$i" ]; then
+                            file_date=$(date -r "$i" "+%Y-%m-%d")
+                            file_date_seconds=$(date -r "$i" +%s) # converte a data para segundos
 
-                    if [[ "$file_date_seconds" -le "$user_date_seconds" ]]; then
-                        size_i=$(du -b "$i" | cut -f1)
-                        size=$(($size+$size_i))
-                        folder_files+=("$i")
-                    fi
-                    
+                            if [[ "$file_date_seconds" -le "$user_date_seconds" ]]; then
+                                size_i=$(du -b "$i" | cut -f1)
+                                size=$(($size+$size_i))
+                                folder_files+=("$i")
+                            fi
+                        else
+                            size="NA"
+                            break
+                        fi
+                        
 
-                done < <(find "$k" -type f -print0 2>/dev/null)
-                
+                    done < <(find "$k" -type f -print0 2>/dev/null)
+                else
+                    size="NA"
+                fi    
 
                 passed_date["$k"]=$(IFS=,; echo "${folder_files[*]}")
                 associative["$k"]="$size"
@@ -190,22 +235,31 @@ function date_filter() {
         
         else
             for folder in "${!passed_filters[@]}"; do
-                size=0
-                folder_files=()
-                array_string="${passed_filters[$folder]}"
-                
-                IFS=, read -ra folder_files_before <<< "$array_string"
-                for j in "${folder_files_before[@]}"; do
+                if [ -r "$folder" ]; then
+                    size=0
+                    folder_files=()
+                    array_string="${passed_filters[$folder]}"
                     
-                    file_date=$(date -r "$j" "+%Y-%m-%d")
-                    file_date_seconds=$(date -r "$j" +%s)
-                    
-                    if [[ "$file_date_seconds" -le "$user_date_seconds" ]]; then
-                        size_j=$(du -b "$j" | cut -f1)
-                        size=$(($size+$size_j))
-                        folder_files+=("$j")
-                    fi
-                done
+                    IFS=, read -ra folder_files_before <<< "$array_string"
+                    for j in "${folder_files_before[@]}"; do
+                        if [ -r "$j" ]; then
+                        
+                            file_date=$(date -r "$j" "+%Y-%m-%d")
+                            file_date_seconds=$(date -r "$j" +%s)
+                            
+                            if [[ "$file_date_seconds" -le "$user_date_seconds" ]]; then
+                                size_j=$(du -b "$j" | cut -f1)
+                                size=$(($size+$size_j))
+                                folder_files+=("$j")
+                            fi
+                        else
+                            size="NA"
+                            break
+                        fi
+                    done
+                else
+                    size="NA"
+                fi
 
                 passed_date["$folder"]=$(IFS=,; echo "${folder_files[*]}")
                 associative["$folder"]="$size"
@@ -265,12 +319,14 @@ function table_header_print() {
         printf "% s % s % s" $header
         diretorios=()
     
-        for i in "${args[@]}"; do     
-            if is_regex "$i" || [[ "$i" =~ ^[A-Z][a-z]{2}\ [0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]; then
+        for i in "${args[@]}"; do  
+            if is_number "$i"; then
+                printf " %s" "$i" # se for um numero, printa o numero   
+            elif is_regex "$i" || [[ "$i" =~ ^[A-Z][a-z]{2}\ [0-9]{2}\ [0-9]{2}:[0-9]{2}$ ]]; then
                 printf " \"%s\"" "$i" # se o argumento for uma expressão regular ou uma data, printa o argumento entre aspas
             elif [ -d "$i" ]; then
                 diretorios+=("$i") # se for um directory, adiciona a um array para dar print no final do header
-                continue
+                continue           
             else
                 printf " %s" "$i"
             fi
@@ -308,7 +364,9 @@ function table_line_print() {
             fi
 
             if [ "$max" == "Default" ]; then
+
                 printf "% s % s \n" "$size" "$folder_pretty"
+
             else
                 if [ $lines_printed -le $max ]; then             
                     printf "% s % s \n" "$size" "$folder_pretty"
@@ -316,6 +374,8 @@ function table_line_print() {
                 fi
             fi
         done
+
         exit 0
     fi
+    
 }

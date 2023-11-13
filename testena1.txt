@@ -1,0 +1,8 @@
+SIZE NAME 20231113 -n ".*c" -a boot
+NA /boot 
+NA /boot/efi 
+5882346 /boot/grub 
+2392289 /boot/grub/fonts 
+121451 /boot/grub/locale 
+966169 /boot/grub/x86_64-efi 
+NA /boot/lost+found 
