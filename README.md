@@ -12,8 +12,8 @@ The options for spacecheck.sh can be:
 * **-l [number]** : Limit the output to a number of lines.
 
 ## Example
-./spacecheck.sh -n ".*sh" -r /var/log
-./spacerate.sh output_day1 output_day2 -a
+* ./spacecheck.sh -n ".*sh" -r ../yourfolder
+* ./spacerate.sh output_day1 output_day2 -a
 
 
 ## Evaluation
