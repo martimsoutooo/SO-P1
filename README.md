@@ -20,8 +20,8 @@ The options for spacecheck.sh can be:
 Grade given: [to be determined]
 
 ## Authors
-* [Henrique Teixeira] - [@henriqueft04]
-* [Martim Santos] - [@martimsoutooo]
+* [Henrique Teixeira] - [@henriqueft04](https://github.com/henriqueft04)
+* [Martim Santos] - [@martimsoutooo](https://github.com/martimsoutooo)
 
 ---
 
